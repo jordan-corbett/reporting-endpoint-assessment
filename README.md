@@ -45,9 +45,11 @@ Example request:
 Example response:
 ```
 { "resolution_types": [
-  { "id": 20,
+  {
+    "id": 20,
     "name": "Fix Complete - Parts Collection Required",
-    "description": "Parts to be collected from site", "count": 9
+    "description": "Parts to be collected from site", "count": 9,
+    "count": 2
   },
   {
     "id": 25,
