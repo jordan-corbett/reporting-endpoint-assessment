@@ -1,59 +1,109 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+## Resolution Types Endpoint
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
 
-## About Laravel
+### Overview
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+This is my implementation of a reporting endpoint that returns resolution types used by work tasks within a given date range.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+The goal was to demonstrate effective use of the Eloquent ORM to model databases and perform queries.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
-## Learning Laravel
+### Installation
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Clone the repository and install dependencies:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```$ composer install```
 
-## Laravel Sponsors
+Create your environment file:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```$ cp .env.example .env```
 
-### Premium Partners
+Generate the application key:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```$ php artisan key:generate```
 
-## Contributing
+Run the migrations and seed the database:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```$ php artisan migrate --seed```
 
-## Code of Conduct
+Run the development server:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```$ php artisan serve```
 
-## Security Vulnerabilities
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### API Endpoint
 
-## License
+``` GET /api/reports/work-tasks/resolutions ```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Parameters:
+from - date, required
+to - date, required
+
+Example request:
+```GET /api/reports/work-tasks/resolutions?from=2026-03-01&to=2026-03-10```
+
+Example response:
+```
+{ "resolution_types": [
+  { "id": 20,
+    "name": "Fix Complete - Parts Collection Required",
+    "description": "Parts to be collected from site", "count": 9
+  },
+  {
+    "id": 25,
+    "name": "Awaiting Purchase Order from Customer",
+    "description": "Awaiting purchase order",
+    "count": 4
+  }
+]}
+```
+
+
+### Architecture
+
+The controller is intentially kept lean. Function logic was placed in a Service class, WorkTaskService, so the controller could simply validate the request parameters, and then call the service to run the logic before returning the response.
+
+Relationships are defined using Eloquent:
+
+Call -> HasOne WorkTask
+WorkTask -> BelongsTo Call
+WorkTask -> BelongsTo ResolutionType
+ResolutionType -> HasMany WorkTasks
+
+
+### Factories and Seeding
+
+Factories and seeders have been created to generate data for testing and demo purposes. Factories can generate calls with varying states, and work tasks with realistic creation times.
+
+
+### Testing
+
+Feature tests have been created for this system. The tests cover:
+
+- Accessing the endpoint
+- Exclusion of draft and archived calls
+- Exclusion of work tasks with no resolution type (ResolutionType = null)
+- Filtering by tasks within a given date range
+- Counting of resolutions types
+
+Run tests using one of these commands:
+
+```$ php artisan test```
+
+```$ vendor/bin/phpunit```
+
+
+### Code Improvements and Assumptions
+
+One consideration while this system was in development:
+
+- It was assumed that ResolutionTypes were not limited to a specified set of values. If they were, I would store these values in an Enum, and use this when creating the migration for the ResolutionTypes table. This ensures that only the values in the Enum could be inserted into the database, preventing unwanted values being stored. It also promotes clean code by storing the list of acceptable values in a separate Enum.
+
+
+### Summary
+
+This implementation focuses on:
+- Clear separation of responsibilities (e.g. use of Services)
+- Awareness of clean code and clean architecture standards
+- Efficient use of the Eloquent ORM
+- Maintainable feature tests
